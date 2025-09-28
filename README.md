@@ -1,18 +1,23 @@
 ### LilyGO GPS Tracker
 
-Tested on the **T-SIM7600E**. May work on other LTE+GPS LilyGO boards.
+A tiny GPS tracking app for the LilyGO T-SIM7600 board
 
-<p align="center"><img src="https://github.com/nmrr/lilygo-gpstracker/blob/main/img/lilygo.jpg" width=40% height=40%></p>
+<p align="center"><img src="https://github.com/nmrr/lilygo-gpstracker/blob/main/img/gpstracker16bit.jpeg" width=45% height=45%></p>
+
+Tested on the **T-SIM7600E**. May work on other LTE+GPS LilyGO boards.
 
 The position is transmitted every minute to a server via **UDP**. The transmission is encrypted using **AES-256-CTR** and authenticated with **HMAC-SHA256**. There is only an uplink connection: the server never communicates with the LilyGO board (for now).
 
 ## Setup
 
-Encryption is performed using **libmbedtls** library:
+<p align="center"><img alt="T-SIM7600E" src="https://github.com/nmrr/lilygo-gpstracker/blob/main/img/lilygo.jpg" width=30% height=30%></p>
+<p align="center">
+T-SIM7600E board
+</p>
 
-```
-apt install libmbedtls-dev
-```
+Dependencies to install in the Arduino IDE:
+* libmbedtls
+* TinyGsmClient
 
 In the LilyGO project file, add the IP address of your server. Destination port can be changed if necessary:
 
