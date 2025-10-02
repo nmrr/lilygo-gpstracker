@@ -35,11 +35,12 @@ server.on('message', (receive, rinfo) => {
   {
     IV = receive.slice(0,16)
     MESSAGE = receive.slice(16,receive.length-32)
+    IVMESSAGE = receive.slice(0,receive.length-32)
     HMAC = receive.slice(receive.length-32,receive.length)
 
     console.log(IV.toString('hex'))
 
-    if (createHmac('sha256', HMACKey).update(MESSAGE).digest('hex') == HMAC.toString('hex'))
+    if (createHmac('sha256', HMACKey).update(IVMESSAGE).digest('hex') == HMAC.toString('hex'))
     {
       console.log(rinfo.address+":"+rinfo.port)
       decrypted = createDecipheriv('aes-256-ctr', AESKey, IV).update(MESSAGE)
@@ -106,7 +107,7 @@ server.on('message', (receive, rinfo) => {
 
 server.on('listening', () => {
   const address = server.address();
-  console.log(`UDP GPS tracker is listening on ${address.address}:${address.port}`);
+  console.log(`server listening ${address.address}:${address.port}`);
 });
 
 server.bind(55100);
@@ -114,7 +115,7 @@ server.bind(55100);
 /////////////////////////////////////////////
 
 
-app.get('/', (req, res) => {
+app.get('/{*splat}', (req, res) => {
 
   HTML = `<!DOCTYPE html>
 <html lang="en">
@@ -122,7 +123,7 @@ app.get('/', (req, res) => {
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <meta http-equiv="refresh" content="75">
-  <title>Hello : 🛰️🌏📍</title>
+  <title>GPS Tracker 🛰️🌏📍</title>
   <link
     rel="stylesheet"
     href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"

@@ -26,7 +26,7 @@ typedef struct {
 
 structEncryption AES256CTR_HMACSHA256(unsigned char keyAES[32], unsigned char ivAES[16], unsigned char* input,
                                       size_t size, const unsigned char* keyHMAC, size_t keyHMACsize) {
-  // AES
+  // AES 256 CTR
   structEncryption output;
   output.encrypted = (unsigned char*)calloc(size, sizeof(unsigned char));
   unsigned char aesBlock[16];
@@ -40,7 +40,7 @@ structEncryption AES256CTR_HMACSHA256(unsigned char keyAES[32], unsigned char iv
   mbedtls_aes_crypt_ctr(&aes, size, &aesCounter, ivAESForEncryption, aesBlock, input, output.encrypted);
   mbedtls_aes_free(&aes);
 
-  // HMAC
+  // HMAC ON IV+ENCRYPTED MESSAGE
   mbedtls_md_context_t ctx;
   const mbedtls_md_info_t* md_info;
 
@@ -48,6 +48,7 @@ structEncryption AES256CTR_HMACSHA256(unsigned char keyAES[32], unsigned char iv
   md_info = mbedtls_md_info_from_type(MBEDTLS_MD_SHA256);
   mbedtls_md_setup(&ctx, md_info, 1);
   mbedtls_md_hmac_starts(&ctx, keyHMAC, keyHMACsize);
+  mbedtls_md_hmac_update(&ctx, ivAES, 16);
   mbedtls_md_hmac_update(&ctx, output.encrypted, size);
   mbedtls_md_hmac_finish(&ctx, output.HMAC);
   mbedtls_md_free(&ctx);
@@ -190,20 +191,25 @@ void setup()
     Serial.println(res);
 
     modem.sendAT("+CGACT=1,1");
-    modem.waitResponse(1000UL, res);
-    Serial.println(res);
+    if (modem.waitResponse(1000UL, GF("OK")) != 1)
+    {
+        Serial.printf("NETWORK ERROR 1 !!!\n");
+        rebootLilygo();
+    }
 
     modem.sendAT("+CIPMODE=1");
-    modem.waitResponse(1000UL, res);
-    Serial.println(res);
+    if (modem.waitResponse(1000UL, GF("OK")) != 1)
+    {
+        Serial.printf("NETWORK ERROR 2 !!!\n");
+        rebootLilygo();
+    }
 
     modem.sendAT("+NETOPEN");
-    modem.waitResponse(1000UL, res);
-    Serial.println(res);
-
-    modem.sendAT("+CIPOPEN?");
-    modem.waitResponse(1000UL, res);
-    Serial.println(res);
+    if (modem.waitResponse(1000UL, GF("OK")) != 1)
+    {
+        Serial.printf("NETWORK ERROR 3 !!!\n");
+        rebootLilygo();
+    }
 }
 
 
@@ -231,16 +237,21 @@ void loop()
 
     uint16_t counter = 0;
     time_t previousTimestamp = 0;
+    time_t previousDrift = 0;
+    time_t previousDriftFeedback = 0;
 
     while(1)
     {
         for (;;) {
-            Serial.println("Requesting current GPS/GNSS/GLONASS location");
+            Serial.printf("Requesting current GPS/GNSS/GLONASS location %hu/120\n", ++counter);
             if (modem.getGPS(&fixMode, &lat2, &lon2, &speed2, &alt2, &vsat2, &usat2, &accuracy2,
                             &year2, &month2, &day2, &hour2, &min2, &sec2)) {
 
                 counter = 0;
                 speed2 = speed2*1.85200428;
+
+                Serial.print("Lon:"); Serial.print(lon2); Serial.print("\tLat:"); Serial.println(lat2);      
+                Serial.print("Speed:"); Serial.print(speed2); Serial.print("\tAltitude:"); Serial.println(alt2);
 
                 t.tm_year = year2-1900;
                 t.tm_mon  = month2-1;
@@ -254,6 +265,17 @@ void loop()
 
                 if (timestamp-previousTimestamp >= 60)
                 {
+                    if (previousTimestamp != 0)
+                    {
+                        previousDrift = timestamp-previousTimestamp-60;
+                        Serial.printf("previousDrift : %ld\n", previousDrift);
+
+                        if (previousDrift == 1) previousDriftFeedback--;
+                        else if (previousDrift >= 2) previousDriftFeedback -= 2;
+                        else if (previousDrift == -1) previousDriftFeedback++;
+                        else if (previousDrift <= -2) previousDriftFeedback += 2;
+                    }
+
                     previousTimestamp = timestamp;
                     Serial.printf("TIMESTAMP : %ld\n", timestamp);
 
@@ -310,13 +332,13 @@ void loop()
                 }
                 else
                 {
-                    time_t waitTime = timestamp-previousTimestamp;
+                    time_t waitTime = timestamp-previousTimestamp-previousDriftFeedback;
                     if (waitTime > 60 || waitTime < 0) waitTime = 30;
-                    delay(1000*(60 - waitTime)); 
+                    Serial.printf("waitTime : %ld\n", waitTime);
+                    delay(1000*(60-waitTime)); 
                 }
             } else {
                 delay(5000L);
-                counter++;
                 if (counter == 120)
                 {
                     rebootLilygo();
@@ -354,6 +376,7 @@ void loop()
             break;
         }
 
+        delay(1000*15);
     }
 
     modem.sendAT("+NETCLOSE");  

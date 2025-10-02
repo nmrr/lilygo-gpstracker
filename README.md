@@ -28,7 +28,7 @@ In the LilyGO project file, add the IP address of your server. Destination port 
 
 You must generate the **AES** key and **HMAC** secret yourself. Execute the following command twice, then insert the hexadecimal string into the Node.js server and as a C-style array in the LilyGO source project. Keys must be identical on both sides.
 ```
-openssl rand -hex 32 | tee >(sed 's/../0x&, /g' | sed 's/, $/};/;s/^/{/' | sed '1s/^/\r\n/'
+openssl rand -hex 32 | tee >(sed 's/../0x&, /g' | sed 's/, $/};/;s/^/{/' | sed '1s/^/\r\n/')
 ```
 
 Add the keys here in the LilyGO project:
@@ -57,6 +57,9 @@ Node.js server needs **express** web framework to work:
 npm install express
 ```
 
+Webpage is available here: http://10.0.0.15:3000/
+
+
 ## Run the project
 
 UDP packets are arriving after a few minutes. All packets are encrypted:
@@ -76,6 +79,10 @@ Currently, there’s a basic auto-refresh every 75 seconds. Real-time positionin
 * Use esp32/modem sleep function to conserve battery
 
 ## Changelog
+
+* 2025-10-02
+  * Fix encryption issue: include IV in HMAC calculation
+  * Improve timing accuracy of pause between GPS acquisitions
 
 * 2025-09-28
   * Initial release
