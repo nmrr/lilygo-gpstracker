@@ -49,7 +49,7 @@ If Node.js server is running on a VPS (with a dedicated IP) inside a container (
 ```
 sysctl -w net.ipv4.ip_forward=1
 iptables -I INPUT 1 -i eno1 -p udp -m state --state NEW,ESTABLISHED -m udp --dport 55100 -j ACCEPT
-iptables -t nat -A PREROUTING -i eno1 -p udp --dport 55100 -j DNAT --to-destination 10.0.0.15:55100
+iptables -t nat -A PREROUTING -i eno1 -p udp --dport 55100 -j DNAT --to-destination XX.XX.XX.XX:55100
 ```
 
 Node.js server needs **express** web framework to work:
@@ -57,7 +57,7 @@ Node.js server needs **express** web framework to work:
 npm install express
 ```
 
-Webpage is available here: http://10.0.0.15:3000/
+Webpage is available here: http://XX.XX.XX.XX:3000/
 
 
 ## Run the project
