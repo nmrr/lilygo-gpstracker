@@ -2,7 +2,7 @@
 
 A tiny GPS tracking app for the LilyGO T-SIM7600 board
 
-<p align="center"><img src="https://github.com/nmrr/lilygo-gpstracker/blob/main/img/gpstracker16bit.jpeg" width=45% height=45%></p>
+<p align="center"><img src="https://github.com/nmrr/lilygo-gpstracker/blob/main/img/gpstracker16bit.jpg" width=45% height=45%></p>
 
 Tested on the **T-SIM7600E**. May work on other LTE+GPS LilyGO boards.
 
